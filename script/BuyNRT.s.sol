@@ -2,6 +2,7 @@
 pragma solidity =0.8.17;
 
 import "forge-std/Script.sol";
+import "forge-std/console2.sol";
 import "../contracts/BridgedPolygonNORI.sol";
 import "../contracts/Market.sol";
 
@@ -32,6 +33,9 @@ contract BuyNRT is Script {
    * @dev This hash is the result of
    * `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
    */
+  //  console2.log("buyer private key:", vm.envUint("BUYER_PRIVATE_KEY"));
+  //  console2.log("bpNoriAddress:", vm.envAddress("BP_NORI_ADDRESS"));
+
   bytes32 public constant PERMIT_TYPEHASH =
     0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
@@ -39,7 +43,8 @@ contract BuyNRT is Script {
   Market private _market;
 
   function run() external {
-    uint256 buyerPrivateKey = vm.envUint("BUYER_PRIVATE_KEY");
+    // uint256 buyerPrivateKey = vm.envUint("BUYER_PRIVATE_KEY");
+    uint256 buyerPrivateKey = 0x5dd0474b0e9e19c6637bd7c653a7fbbbda6a034aa8ef1a3267fb2b2d7f27731b;
     address buyerAddress = vm.addr(buyerPrivateKey);
 
     vm.startBroadcast(buyerAddress);
@@ -52,14 +57,20 @@ contract BuyNRT is Script {
 
     // recipientAddress is where the certificate is minted to.  It will often be
     // the same as buyerAddress (who pays NORI) but is not required to be.
-    address recipientAddress = vm.envAddress("RECIPIENT_ADDRESS");
+    // address recipientAddress = vm.envAddress("RECIPIENT_ADDRESS");
+    address recipientAddress = buyerAddress;
+
     // Buy 10  NRTs
     uint256 NRT_PURCHASE_QUANTITY = 10.0 ether;
+
+    uint256 totalPurchaseCost = _market.calculateCheckoutTotal(
+      NRT_PURCHASE_QUANTITY
+    );
 
     Permit memory permit = Permit({
       owner: buyerAddress,
       spender: marketAddress,
-      value: NRT_PURCHASE_QUANTITY,
+      value: totalPurchaseCost,
       nonce: _bridgedPolygonNORI.nonces(buyerAddress),
       deadline: block.timestamp + 1 days
     });
