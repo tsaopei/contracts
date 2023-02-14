@@ -112,10 +112,14 @@ const deployOrUpgradeProxy = async <
     process.env.FORCE_PROXY_DEPLOYMENT ||
     typeof maybeProxyAddress !== 'string';
   if (
-    shouldDeployProxy &&
-    !['bridgedpolygonnori', 'nori', 'lockednori'].includes(
-      contractName.toLowerCase()
-    )
+    shouldDeployProxy
+    // This guard was used during mainnet deployment as an extra barrier to prevent
+    // accidental deployment of live contracts. It has to be removed to allow for
+    // complete test environment Hardhat deployments.
+    //  &&
+    // !['bridgedpolygonnori', 'nori', 'lockednori'].includes(
+    //   contractName.toLowerCase()
+    // )
   ) {
     hre.trace('Deploying proxy and instance', contractName);
     const fireblocksSigner = signer as any as FireblocksSigner;
@@ -147,7 +151,7 @@ const deployOrUpgradeProxy = async <
       const existingImplementationAddress =
         await hre.upgrades.erc1967.getImplementationAddress(maybeProxyAddress!);
       hre.trace('Existing implementation at:', existingImplementationAddress);
-      const fireblocksSigner = signer as any as FireblocksSigner;
+      const fireblocksSigner = signer as FireblocksSigner;
       if (typeof fireblocksSigner.setNextTransactionMemo === 'function') {
         fireblocksSigner.setNextTransactionMemo(
           `Upgrade contract instance for ${contractName}`

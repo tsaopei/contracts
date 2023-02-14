@@ -13,8 +13,15 @@ import {
 const CONFIRMATIONS = 5;
 export const deploy: DeployFunction = async (environment) => {
   const hre = environment as unknown as CustomHardHatRuntimeEnvironment;
+  const CONFIRMATIONS =
+    hre.network.name === 'localhost' || hre.network.name === 'hardhat' ? 1 : 5;
+
   Logger.setLogLevel(Logger.levels.DEBUG);
   hre.trace(`configure-assets-after-deployment`);
+
+  // impersonating the fireblocks account that deployed contracts
+  // on mainnet so that we can test mainnet deploy on a local fork
+  // used this issue to figure out how to do this:
   // const provider = new ethers.providers.JsonRpcProvider(
   //   'http://localhost:8545'
   // );
@@ -72,11 +79,11 @@ export const deploy: DeployFunction = async (environment) => {
     hre.trace('Set removal addresses in Certificate');
   }
   if (
-    (await market.getRemovalAddress()) !== removal.address ||
-    (await market.getCertificateAddress()) !== certificate.address
+    (await removal.getMarketAddress()) !== market.address ||
+    (await removal.getCertificateAddress()) !== certificate.address
   ) {
     hre.trace(
-      'Setting removal and certificate addresses in Removal contract...'
+      'Setting market and certificate addresses in Removal contract...'
     );
     txn = await removal.registerContractAddresses(
       market.address,
